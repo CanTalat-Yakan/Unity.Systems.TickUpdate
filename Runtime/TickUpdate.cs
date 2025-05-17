@@ -1,10 +1,38 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.PlayerLoop;
 
-namespace Unity.Essentials
+namespace UnityEssentials
 {
-    public static class TickUpdateSystem
+    public static partial class TickUpdate
+    {
+        public static event Action<float> OnTick;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        public static void Initialize() =>
+            PlayerLoopHook.AddToPlayerLoop<Update>(Tick);
+
+        private static void Tick()
+        {
+            OnTick?.Invoke(Time.deltaTime);
+
+            if (!Application.isPlaying)
+                Clear();
+        }
+
+        public static void Clear()
+        {
+            PlayerLoopHook.RemoveFromPlayerLoop<Update>(Tick);
+
+            OnTick = null;
+
+            s_tickGroups.Clear();
+            s_groupsToRemove.Clear();
+        }
+    }
+
+    public static partial class TickUpdate
     {
         private class TickGroup
         {
@@ -21,18 +49,18 @@ namespace Unity.Essentials
             }
         }
 
-        private static readonly Dictionary<int, TickGroup> _tickGroups = new();
-        private static readonly List<int> _groupsToRemove = new();
+        private static readonly Dictionary<int, TickGroup> s_tickGroups = new();
+        private static readonly List<int> s_groupsToRemove = new();
 
         public static void Register(int ticksPerSecond, Action action)
         {
             if (action == null) throw new ArgumentNullException(nameof(action));
             if (ticksPerSecond <= 0) throw new ArgumentException("Ticks per second must be positive", nameof(ticksPerSecond));
 
-            if (!_tickGroups.TryGetValue(ticksPerSecond, out var tickGroup))
+            if (!s_tickGroups.TryGetValue(ticksPerSecond, out var tickGroup))
             {
                 tickGroup = new TickGroup(ticksPerSecond);
-                _tickGroups.Add(ticksPerSecond, tickGroup);
+                s_tickGroups.Add(ticksPerSecond, tickGroup);
             }
 
             if (!tickGroup.Actions.Contains(action))
@@ -41,24 +69,24 @@ namespace Unity.Essentials
 
         public static void Unregister(int ticksPerSecond, Action action)
         {
-            if (_tickGroups.TryGetValue(ticksPerSecond, out var tickGroup))
+            if (s_tickGroups.TryGetValue(ticksPerSecond, out var tickGroup))
             {
                 tickGroup.Actions.Remove(action);
 
                 // Mark empty groups for removal
                 if (tickGroup.Actions.Count == 0)
-                    _groupsToRemove.Add(ticksPerSecond);
+                    s_groupsToRemove.Add(ticksPerSecond);
             }
         }
 
         public static void Update(float deltaTime)
         {
             // First clean up empty groups
-            foreach (var ticksPerSecond in _groupsToRemove)
-                _tickGroups.Remove(ticksPerSecond);
-            _groupsToRemove.Clear();
+            foreach (var ticksPerSecond in s_groupsToRemove)
+                s_tickGroups.Remove(ticksPerSecond);
+            s_groupsToRemove.Clear();
 
-            foreach (var group in _tickGroups)
+            foreach (var group in s_tickGroups)
             {
                 var tickGroup = group.Value;
                 tickGroup.AccumulatedTime += deltaTime;
@@ -82,10 +110,7 @@ namespace Unity.Essentials
 
                         for (int j = 0; j < actionsThisTick; j++)
                         {
-                            try
-                            {
-                                tickGroup.Actions[tickGroup.CurrentActionIndex]?.Invoke();
-                            }
+                            try { tickGroup.Actions[tickGroup.CurrentActionIndex]?.Invoke(); }
                             catch (Exception ex) { Debug.Log($"Error executing tick action: {ex}"); }
 
                             tickGroup.CurrentActionIndex++;
@@ -95,12 +120,6 @@ namespace Unity.Essentials
                     }
                 }
             }
-        }
-
-        public static void Clear()
-        {
-            _tickGroups.Clear();
-            _groupsToRemove.Clear();
         }
     }
 }
