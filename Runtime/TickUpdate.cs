@@ -11,7 +11,7 @@ namespace UnityEssentials
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         public static void Initialize() =>
-            PlayerLoopHook.AddToPlayerLoop<Update>(Tick);
+            PlayerLoopHook.Add<Update>(Tick);
 
         private static void Tick()
         {
@@ -23,7 +23,7 @@ namespace UnityEssentials
 
         public static void Clear()
         {
-            PlayerLoopHook.RemoveFromPlayerLoop<Update>(Tick);
+            PlayerLoopHook.Remove<Update>(Tick);
 
             OnTick = null;
 
