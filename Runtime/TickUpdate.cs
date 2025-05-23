@@ -13,8 +13,6 @@ namespace UnityEssentials
     /// cref="UnityEngine.PlayerLoop.Update"/> phase, passing the time elapsed since the last frame.</remarks>
     public static partial class TickUpdate
     {
-        public static event Action<float> OnTick;
-
         /// <summary>
         /// Initializes the system by adding the <see cref="Tick"/> method to the player loop.
         /// </summary>
@@ -32,7 +30,7 @@ namespace UnityEssentials
         /// time. If the application is not in play mode, it clears any associated state.</remarks>
         private static void Tick()
         {
-            OnTick?.Invoke(Time.deltaTime);
+            Update(Time.deltaTime);
 
             if (!Application.isPlaying)
                 Clear();
@@ -47,8 +45,6 @@ namespace UnityEssentials
         public static void Clear()
         {
             PlayerLoopHook.Remove<Update>(Tick);
-
-            OnTick = null;
 
             s_tickGroups.Clear();
             s_groupsToRemove.Clear();
