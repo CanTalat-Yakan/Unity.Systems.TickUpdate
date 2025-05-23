@@ -13,21 +13,10 @@ namespace UnityEssentials
     /// cref="UnityEngine.PlayerLoop.Update"/> phase, passing the time elapsed since the last frame.</remarks>
     public static partial class TickUpdate
     {
-        /// <summary>
-        /// Initializes the system by adding the <see cref="Tick"/> method to the player loop.
-        /// </summary>
-        /// <remarks>This method is automatically invoked after the scene has loaded, as specified by the 
-        /// <see cref="RuntimeInitializeOnLoadMethodAttribute"/> with the <see
-        /// cref="RuntimeInitializeLoadType.AfterSceneLoad"/> option.</remarks>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         public static void Initialize() =>
             PlayerLoopHook.Add<Update>(Tick);
 
-        /// <summary>
-        /// Invokes the <see cref="OnTick"/> event with the elapsed time since the last frame.
-        /// </summary>
-        /// <remarks>This method is typically called once per frame to notify subscribers of the elapsed
-        /// time. If the application is not in play mode, it clears any associated state.</remarks>
         private static void Tick()
         {
             Update(Time.deltaTime);
@@ -36,12 +25,6 @@ namespace UnityEssentials
                 Clear();
         }
 
-        /// <summary>
-        /// Clears all registered tick groups, removes pending groups, and resets the tick event handler.
-        /// </summary>
-        /// <remarks>This method removes the <see cref="Update"/> hook from the player loop, clears all
-        /// internal collections of tick groups, and sets the <see cref="OnTick"/> event to <see langword="null"/>.  Use
-        /// this method to reset the tick system to its initial state.</remarks>
         public static void Clear()
         {
             PlayerLoopHook.Remove<Update>(Tick);
@@ -51,13 +34,6 @@ namespace UnityEssentials
         }
     }
 
-    /// <summary>
-    /// Provides functionality for managing and executing actions at specified tick rates.
-    /// </summary>
-    /// <remarks>The <see cref="TickUpdate"/> class allows actions to be registered and executed at a
-    /// consistent frequency, defined in ticks per second. Actions are grouped by their tick rate, and the class ensures
-    /// that each group executes its actions at the appropriate intervals based on the elapsed time provided to the <see
-    /// cref="Update(float)"/> method.</remarks>
     public static partial class TickUpdate
     {
         /// <summary>
