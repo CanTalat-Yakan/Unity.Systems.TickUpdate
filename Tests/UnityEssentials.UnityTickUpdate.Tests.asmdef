@@ -4,7 +4,8 @@
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "UnityEssentials.TickUpdate"
+        "UnityEssentials.TickUpdate",
+        "UnityEssentials.PlayerLoopHook"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
